@@ -15,7 +15,7 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
-import { useSubscriptions, useInviteMember, useAcceptInvitation, useRemoveMember, useResendInvitation } from '@/hooks/useSubscriptions';
+import { useSubscriptions, useInviteMember, useAcceptInvitation, useRemoveMember, useResendInvitation, useLeaveSharedSubscription } from '@/hooks/useSubscriptions';
 import { useStats } from '@/hooks/useSubscriptions';
 import { formatCurrency, getDaysUntil } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -38,6 +38,7 @@ const SharedSubscriptions = () => {
   const acceptMutation = useAcceptInvitation();
   const removeMutation = useRemoveMember();
   const resendMutation = useResendInvitation();
+  const leaveMutation = useLeaveSharedSubscription();
 
   const subscriptions = subsData?.subscriptions || [];
   const stats = statsData;
@@ -111,13 +112,22 @@ const SharedSubscriptions = () => {
     }
   };
 
+  const handleLeave = async (subId: string) => {
+    if (!confirm('Are you sure you want to leave this shared subscription?')) return;
+    try {
+      await leaveMutation.mutateAsync(subId);
+    } catch (error) {
+      // Error handled in mutation
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-      },
+      } as any,
     },
   };
 
@@ -127,7 +137,7 @@ const SharedSubscriptions = () => {
       y: 0,
       opacity: 1,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 100,
       },
     },
@@ -193,7 +203,7 @@ const SharedSubscriptions = () => {
           onClick={() => setActiveTab('mine')}
         >
           <span className="flex items-center gap-2">
-            <AnimatedUsersSVG />
+            <Users size={16} />
             My Shared Subs
           </span>
           {activeTab === 'mine' && (
@@ -323,6 +333,12 @@ const SharedSubscriptions = () => {
                           <span className="text-muted-foreground">Next Payment</span>
                           <span className={getDaysUntil(sub.nextBillingDate) <= 3 ? 'text-red-500' : ''}>
                             {format(new Date(sub.nextBillingDate), 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Your Role</span>
+                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            Owner
                           </span>
                         </div>
                       </div>
@@ -552,7 +568,7 @@ const SharedSubscriptions = () => {
                     onChange={(e) => {
                       const sub = mySubscriptions.find((s: any) => s._id === e.target.value);
                       setSelectedSub(sub);
-                      setInviteAmount((sub?.price / 2).toFixed(2));
+                      setInviteAmount(((sub?.price || 0) / 2).toFixed(2));
                     }}
                   >
                     <option value="">Choose a subscription...</option>
@@ -593,7 +609,7 @@ const SharedSubscriptions = () => {
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         Total: {formatCurrency(selectedSub.price, selectedSub.currency)} ÷{' '}
-                        {inviteAmount ? Math.floor(selectedSub.price / parseFloat(inviteAmount)) : '?'} people
+                        {inviteAmount ? Math.floor((selectedSub.price || 0) / parseFloat(inviteAmount)) : '?'} people
                       </p>
                     </div>
                     <motion.div

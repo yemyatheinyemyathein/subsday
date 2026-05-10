@@ -151,9 +151,19 @@ export const inviteMember = async (req: Request, res: Response): Promise<void> =
     return;
   }
 
+  if (email.toLowerCase() === req.user!.email.toLowerCase()) {
+    res.status(400).json({ error: 'You cannot invite yourself' });
+    return;
+  }
+
   const subscription = await Subscription.findOne({ _id: id, user: req.user!._id }).populate('user', 'name email');
   if (!subscription) {
     res.status(404).json({ error: 'Subscription not found' });
+    return;
+  }
+
+  if (Number(shareAmount) > subscription.price) {
+    res.status(400).json({ error: 'Share amount cannot exceed the subscription price' });
     return;
   }
 
@@ -163,8 +173,11 @@ export const inviteMember = async (req: Request, res: Response): Promise<void> =
     return;
   }
 
+  const invitedUser = await User.findOne({ email: email.toLowerCase() });
+
   subscription.sharedMembers = subscription.sharedMembers || [];
   subscription.sharedMembers.push({
+    user: invitedUser?._id as any,
     email,
     shareAmount: Number(shareAmount),
     status: 'pending',
@@ -282,6 +295,32 @@ export const removeMember = async (req: Request, res: Response): Promise<void> =
 
   await subscription.save();
   res.json({ subscription });
+};
+
+export const leaveSharedSubscription = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const subscription = await Subscription.findOne({
+    _id: id,
+    'sharedMembers.email': req.user!.email,
+    'sharedMembers.status': 'active',
+  });
+
+  if (!subscription) {
+    res.status(404).json({ error: 'Shared subscription not found' });
+    return;
+  }
+
+  subscription.sharedMembers = subscription.sharedMembers?.filter(
+    m => m.email !== req.user!.email
+  );
+
+  if (!subscription.sharedMembers || subscription.sharedMembers.length === 0) {
+    subscription.isShared = false;
+  }
+
+  await subscription.save();
+  res.json({ message: 'Left shared subscription successfully' });
 };
 
 export const resendInvitation = async (req: Request, res: Response): Promise<void> => {

@@ -11,6 +11,7 @@ import {
   getPendingInvitations,
   acceptInvitation,
   removeMember,
+  leaveSharedSubscription,
   resendInvitation,
   createValidation,
   updateValidation,
@@ -35,6 +36,7 @@ router.post('/:id/resend-invite', resendInvitation);
 router.get('/shared/mine', getSharedSubscriptions);
 router.get('/shared/invitations', getPendingInvitations);
 router.post('/:id/accept', acceptInvitation);
+router.post('/:id/leave', leaveSharedSubscription);
 router.delete('/:id/members/:memberEmail', removeMember);
 
 export default router;

@@ -94,6 +94,10 @@ export const subscriptionApi = {
     const response = await api.delete(`/subscriptions/${id}/members/${memberEmail}`);
     return response.data;
   },
+  leaveShared: async (id: string): Promise<{ message: string }> => {
+    const response = await api.post(`/subscriptions/${id}/leave`);
+    return response.data;
+  },
 };
 
 export const statsApi = {

@@ -136,6 +136,20 @@ export const useRemoveMember = () => {
   });
 };
 
+export const useLeaveSharedSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => subscriptionApi.leaveShared(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      toast.success('Left shared subscription successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || 'Failed to leave subscription');
+    },
+  });
+};
+
 export const useStats = () => {
   return useQuery<Stats>({
     queryKey: ['stats'],

@@ -4,6 +4,7 @@ import { useStats } from '@/hooks/useSubscriptions';
 import { useSubscriptions } from '@/hooks/useSubscriptions';
 import { formatCurrency, getDaysUntil } from '@/lib/utils';
 import { ArrowUpRight, CalendarDays, CreditCard, DollarSign, TrendingUp, Plus, AlertCircle } from 'lucide-react';
+import { DashboardStatsSVG } from '@/components/AnimatedSVG';
 import { format } from 'date-fns';
 
 const Dashboard = () => {
@@ -59,11 +60,19 @@ const Dashboard = () => {
       className="space-y-6"
     >
       <motion.div variants={itemVariants} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground">Overview of your subscriptions</p>
+        <div className="flex items-center gap-4">
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <DashboardStatsSVG />
+          </motion.div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-muted-foreground">Overview of your subscriptions</p>
+          </div>
         </div>
         <Link to="/subscriptions" className="btn-primary gap-2 hover:shadow-lg hover:shadow-primary/25 transition-shadow">
           <Plus size={16} />

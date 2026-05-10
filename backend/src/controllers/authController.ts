@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User';
+import TokenBlacklist from '../models/TokenBlacklist';
 
 export const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),
@@ -120,11 +121,30 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-export const logout = async (_req: Request, res: Response): Promise<void> => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  });
-  res.json({ message: 'Logged out successfully' });
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const token = req.token || req.header('Authorization')?.replace('Bearer ', '') || req.cookies?.token;
+
+    if (token) {
+      const decoded = jwt.decode(token) as { exp?: number } | null;
+      const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      await TokenBlacklist.create({ token, expiresAt });
+    }
+
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+
+    res.json({ message: 'Logged out successfully' });
+  } catch {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+    res.json({ message: 'Logged out successfully' });
+  }
 };
